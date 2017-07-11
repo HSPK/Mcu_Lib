@@ -100,7 +100,7 @@ void UartAction(uint8 *str,uint8 len)
 					LcdShowText(0,1,lcdStr2,16);
 					E2pWriteDat(0x80,lcdStr2,16);
 				}
-		default:UartSendStr(cmdFbk,sizeof(cmdFbk);break;
+	            break;	default:UartSendStr(cmdFbk,sizeof(cmdFbk);break;
 	}
 }
 
