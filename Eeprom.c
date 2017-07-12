@@ -1,36 +1,53 @@
 #include <reg52.h>
-extern bit I2cWriteByt(unsigned char dat);
+
 extern void I2cStart();
 extern void I2cStop();
-extern unsigned char I2cReadByt(unsigned char ACK);
-extern bit I2cCheckAck();
+extern bit I2cWriteByt(unsigned char dat);
+extern unsigned char I2cReadACK();
+extern unsigned char I2cReadNAK();
 
 
-void E2pWtiteDat(unsigned char addr,unsigned char *dat,unsigned char len)
+
+void E2pWriteDat(unsigned char addr,unsigned char *dat,unsigned char len)
 {
-	I2cStart();
-	I2cWriteByt(0x50<<1)
-	while(!I2cCheckAck());
-	I2cWriteByt(addr);
-	while(len--)
+	while(len>0)
 	{
-		I2cWriteByt(*dat++)
-		addr++;
-		if(addr&0x07==0)
-			while(!I2cCheckAck());
+		do{
+		I2cStart();
+		if(I2cWriteByt(0x50<<1))
+			break;
+		I2cStop();
+		}while(1);
+		
+		I2cWriteByt(addr);
+		while(len>0)
+		{
+			I2cWriteByt(*dat++);
+			len--;
+			addr++;
+			if((addr&0x07)==0)
+				break;
+		}
+		I2cStop();
 	}
-	I2cStop();
 }
 
 void E2pReadDat(unsigned char addr,unsigned char *dat,unsigned char len)
 {
-	I2cStart();
-	I2cWriteByt(0x50);
-	while(!I2cCheckAck());
-	I2cWriteByt(0x50<<1+1);
-	I2cStart();
+	do{
+		I2cStart();
+		if(I2cWriteByt(0x50<<1))
+			break;
+		I2cStop();
+	}while(1);
 	I2cWriteByt(addr);
-	while(len--)
-		*dat++=I2cReadByt(len-1);
+	I2cStart();
+	I2cWriteByt((0x50<<1)|0x01);
+	while(len>1)
+	{
+		*dat++=I2cReadACK();
+		len--;
+	}
+	*dat=I2cReadNAK();
 	I2cStop();
 }
