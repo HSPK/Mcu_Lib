@@ -10,84 +10,86 @@
 #include <reg52.h>
 #define SYS_OSC 12000000
 #define SYS_T 12
-
-extern void UartAction(unsigned char *str,unsigned char len);
 bit strEndFlag=0;
 bit txdFlag=0;
-unsigned char padta rxdBuf[40];
+unsigned char pdata rxdBuf[40];
 unsigned char cntRxd=0;
 
-void ConfigUart(uint16 baud)
+extern void UartAction(unsigned char *str,unsigned char len);
+
+void ConfigUart(unsigned int baud)
 {
-	uint8 load;
+	unsigned char load;
 	SCON=0x50;
 	PCON=0x00;
 	ES=1;
 	load=256-(SYS_OSC/SYS_T)/32/baud;
 	TMOD&=0x0f;
 	TMOD|=0x20;
-	TH1=load;
+	TH1=load;	   
 	TL1=TH1;
 	TR1=1;
 	ET1=0;
 }
 
-unsigned char UartReadStr(*buf,unsigned char len)
+unsigned char UartReadStr(unsigned char *buf,unsigned char len)
 {
 		unsigned char i;
 		if(len>cntRxd)
 			len=cntRxd;
-		while(len--)
+		for(i=0;i<len;i++)
 		{
-			*buf=*rxdBuf;
-			rxd++;
-			buf++;
+			*buf++=rxdBuf[i];
 		}
 		cntRxd=0;
 		return len;
 }
 
-void UartCheckEnd()
+void UartCheckEnd(unsigned char ms)
 {
-	unsigned char static cntBkp=0;
-	unsigned char static idleTime=0;
+	static unsigned char cntBkp=0;
+	static unsigned char idleTime=0;
 	if(cntRxd>0)
 	{
-	if(cntBkp!=cntRxd)
-	{
-		idleTime=0;
-		cntBkp=cntRxd;
-	}
-	else
-	{
-		if(idleTime<30)
+		if(cntBkp!=cntRxd)
 		{
-			idleTime+=ms;
-			if(idleTime>=30)
-				strEndFlag=1;
+			idleTime=0;
+			cntBkp=cntRxd;
 		}
-	}
+		else
+		{
+			if(idleTime<30)
+			{
+				idleTime+=ms;
+				if(idleTime>=30)
+					strEndFlag=1;
+			}
+		}
 	}
 	else
 		cntBkp=0;
 }
 
 
-void UartSendStr(*str,unsigned char len)
+void UartSendStr(unsigned char *str,unsigned char len)
 {
 		while(len--)
 		{
-			while(!txdFlag);
 			txdFlag=0;
 			SBUF=*str++;
+			while(!txdFlag);
 		}
 }
+
+
+
+
 
 void UartDriver()
 {
 	unsigned char len;
 	unsigned char pdata buf[40];
-	if(strEndFalg)
+	if(strEndFlag)
 	{
 		strEndFlag=0;
 		len=UartReadStr(buf,sizeof(buf));
