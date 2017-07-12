@@ -11,22 +11,17 @@
 #include <reg52.h>
 #include <intrins.h>
 #define Lcd_DB P0
+#define DelayFourT() {_nop_();_nop_();_nop_();_nop_();}
 
-sbit Lcd_E=P2^6;
-sbit Lcd_RS=P2^5;
-sbit Lcd_RW=P2^7;
+sbit Lcd_E=P2^7;
+sbit Lcd_RS=P2^6;
+sbit Lcd_RW=P2^5;
 
-void DelayFourT()
-{
-	_nop_();
-	_nop_();
-	_nop_();
-	_nop_();
-}
 
 void LcdWaitReady()
 {
 	unsigned char state;
+	Lcd_DB=0xff;
 	Lcd_RS=0;
 	Lcd_RW=1;
 	do{
@@ -83,7 +78,6 @@ void LcdWriteDat(unsigned char dat)
 
 void LcdShowText(unsigned char x,unsigned char y,unsigned char *dat,unsigned char len)
 {
-	unsigned char i=0;
 	setXY(x,y);
 	while(len--)
 	{
